@@ -1,0 +1,29 @@
+{
+  "name": "url-short",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Code-Science/URL-short.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Code-Science/URL-short/issues"
+  },
+  "homepage": "https://github.com/Code-Science/URL-short#readme",
+  "dependencies": {
+    "mocha": "^8.2.1",
+    "nanoid": "^3.1.20"
+  },
+  "devDependencies": {
+    "eslint": "^7.18.0"
+  }
+}
