@@ -1,14 +1,14 @@
 const { nanoid } = require('nanoid');
 class TokenFactory {
-  constructor() {
-    this._store = {};
+  constructor(store) {
+    this._store = store;
   }
   create(s) {
     if (typeof s !== 'string' || !s) throw new Error('invalid input');
-    if (this._store[s]) return this._store[s];
+    if (this._store.hasToken(s)) return this._store.getToken(s);
 
     const token = nanoid(10);
-    this._store[s] = token;
+    this._store.save(token, s);
     return token;
   }
 }

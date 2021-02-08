@@ -1,9 +1,10 @@
 const assert = require('assert');
 const TokenFactory = require('../src/TokenFactory');
+const TokenStore = require('../src/TokenStore');
 describe('Token Factory', () => {
   let tokenFactory;
   beforeEach(() => {
-    tokenFactory = new TokenFactory();
+    tokenFactory = new TokenFactory(new TokenStore());
   });
   it('should reject empty values', () => {
     assert.throws(() => {
