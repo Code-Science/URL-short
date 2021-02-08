@@ -4,10 +4,8 @@ class RedisTokenStore {
   }
 
   async getToken(url) {
-    const token = await this._store.get(`url:${url}`).catch((err) => {
-      if (err) console.error(err);
-    });
-    if (token) return token;
+    const token = await this._store.get(`url:${url}`);
+    return token || undefined;
   }
 
   async hasToken(url) {
@@ -17,13 +15,12 @@ class RedisTokenStore {
 
   async getUrl(token) {
     const url = await this._store.get(`token:${token}`);
-    if (url) return url;
+    return url || undefined;
   }
 
   async save(token, url) {
     if (await this.hasToken(url)) return;
-    await this._store.set(`url:${url}`, token);
-    await this._store.set(`token:${token}`, url);
+    await this._store.mset(`url:${url}`, token, `token:${token}`, url);
   }
 }
 

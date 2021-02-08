@@ -12,7 +12,7 @@ describe('Redis Token Store', () => {
     await database.flushdb();
   });
   after(async () => {
-    await database.quit();
+    // await database.quit();
   });
   it('should return token for a given url if it exist', async () => {
     await tokenStore.save('0123456789', 'someUrl');

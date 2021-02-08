@@ -3,12 +3,12 @@ class TokenFactory {
   constructor(store) {
     this._store = store;
   }
-  create(s) {
+  async create(s) {
     if (typeof s !== 'string' || !s) throw new Error('invalid input');
-    if (this._store.hasToken(s)) return this._store.getToken(s);
+    if (await this._store.hasToken(s)) return await this._store.getToken(s);
 
     const token = nanoid(10);
-    this._store.save(token, s);
+    await this._store.save(token, s);
     return token;
   }
 }

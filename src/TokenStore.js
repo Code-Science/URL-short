@@ -3,16 +3,16 @@ class TokenStore {
     this._store = {};
   }
 
-  getToken(url) {
+  async getToken(url) {
     const token = this._store[url];
     return token;
   }
 
-  hasToken(url) {
+  async hasToken(url) {
     return Boolean(this._store[url]);
   }
 
-  getUrl(token) {
+  async getUrl(token) {
     let url;
     Object.keys(this._store).forEach((key) => {
       if (this._store[key] === token) url = key;
@@ -20,7 +20,7 @@ class TokenStore {
     return url;
   }
 
-  save(token, url) {
+  async save(token, url) {
     if (this._store[url]) return;
     this._store[url] = token;
   }
