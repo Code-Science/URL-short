@@ -1,28 +1,49 @@
 const redis = require('redis');
-const client = redis.createClient();
 const { promisify } = require('util');
 
-client.on('error', function (error) {
-  console.error(error);
-});
-client.on('connect', () => {
-  console.log('Database connected');
-});
+const init = () => {
+  const client = redis.createClient();
 
-const get = promisify(client.get).bind(client);
-const set = promisify(client.set).bind(client);
-const mset = promisify(client.mset).bind(client);
-const exists = promisify(client.exists).bind(client);
-const flushdb = promisify(client.flushdb).bind(client);
-const selectdb = promisify(client.select).bind(client);
-const quit = promisify(client.quit).bind(client);
+  addEventListeners();
+
+  return buildApi();
+
+  function addEventListeners() {
+    client.on('error', function (error) {
+      console.error(error);
+    });
+    client.on('connect', () => {
+      console.log('Database connected');
+    });
+  }
+
+  function msetExpire(seconds, ...args) {
+    return new Promise((resolve, reject) => {
+      const multi = client.multi();
+      multi.mset(...args);
+      args.forEach((arg, i) => {
+        if (i % 2 === 0) multi.expire(arg, seconds);
+      });
+      multi.exec((err, replies) => {
+        if (err) return reject(err);
+        resolve(replies);
+      });
+    });
+  }
+
+  function buildApi() {
+    return ['get', 'set', 'mset', 'exists', 'flushdb', 'select', 'quit'].reduce(
+      (api, operation) => {
+        return {
+          ...api,
+          [operation]: promisify(client[operation]).bind(client),
+        };
+      },
+      { msetExpire }
+    );
+  }
+};
 
 module.exports = {
-  get,
-  set,
-  mset,
-  exists,
-  flushdb,
-  selectdb,
-  quit,
+  init,
 };

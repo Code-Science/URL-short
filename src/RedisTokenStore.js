@@ -1,11 +1,13 @@
+const oneDayInSeconds = 24 * 60 * 60;
+
 class RedisTokenStore {
-  constructor(database) {
+  constructor(database, ttl = oneDayInSeconds) {
     this._store = database;
+    this._ttl = ttl;
   }
 
   async getToken(url) {
-    const token = await this._store.get(`url:${url}`);
-    return token || undefined;
+    return this._store.get(`url:${url}`);
   }
 
   async hasToken(url) {
@@ -14,13 +16,12 @@ class RedisTokenStore {
   }
 
   async getUrl(token) {
-    const url = await this._store.get(`token:${token}`);
-    return url || undefined;
+    return this._store.get(`token:${token}`);
   }
 
   async save(token, url) {
     if (await this.hasToken(url)) return;
-    await this._store.mset(`url:${url}`, token, `token:${token}`, url);
+    await this._store.msetExpire(this._ttl, `url:${url}`, token, `token:${token}`, url);
   }
 }
 

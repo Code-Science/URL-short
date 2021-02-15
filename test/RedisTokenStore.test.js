@@ -1,25 +1,25 @@
 const assert = require('assert');
-const database = require('../db');
+const database = require('../db').init();
 const RedisTokenStore = require('../src/RedisTokenStore');
 
 describe('Redis Token Store', () => {
   let tokenStore;
   before(async () => {
-    await database.selectdb(3); // database 3 is used for testing only
-    tokenStore = new RedisTokenStore(database);
+    await database.select(3); // database 3 is used for testing only
+    tokenStore = new RedisTokenStore(database, 1);
   });
   afterEach(async () => {
     await database.flushdb();
   });
   after(async () => {
-    // await database.quit();
+    await database.quit();
   });
   it('should return token for a given url if it exist', async () => {
     await tokenStore.save('0123456789', 'someUrl');
     assert.strictEqual(await tokenStore.getToken('someUrl'), '0123456789');
   });
   it('should retuns undefined for a given url if token does not exist', async () => {
-    assert.strictEqual(await tokenStore.getToken('someUrl'), undefined);
+    assert.strictEqual(await tokenStore.getToken('someUrl'), null);
   });
   it('should indicate when token exist for a given url', async () => {
     await tokenStore.save('0123456789', 'someUrl');
@@ -33,7 +33,7 @@ describe('Redis Token Store', () => {
     assert.strictEqual(await tokenStore.getUrl('0123456789'), 'someUrl');
   });
   it('should return undefined for a given token if it does not exist', async () => {
-    assert.strictEqual(await tokenStore.getUrl('0123456789'), undefined);
+    assert.strictEqual(await tokenStore.getUrl('0123456789'), null);
   });
   it('should save a given token and url pair if it does not exist', async () => {
     await tokenStore.save('0123456789', 'someUrl');
@@ -44,5 +44,12 @@ describe('Redis Token Store', () => {
     await tokenStore.save('0123456789', 'someUrl');
     await tokenStore.save('6666666666', 'someUrl');
     assert.strictEqual(await tokenStore.getToken('someUrl'), '0123456789');
+  });
+
+  it('should expire the saved token and url pair after given seconds', async () => {
+    await tokenStore.save('0123456789', 'someUrl');
+    assert.strictEqual(await tokenStore.getToken('someUrl'), '0123456789');
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    assert.strictEqual(await tokenStore.getToken('someUrl'), null);
   });
 });

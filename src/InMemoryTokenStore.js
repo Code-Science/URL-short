@@ -1,4 +1,4 @@
-class TokenStore {
+class InMemoryTokenStore {
   constructor() {
     this._store = {};
   }
@@ -26,4 +26,4 @@ class TokenStore {
   }
 }
 
-module.exports = TokenStore;
+module.exports = InMemoryTokenStore;
