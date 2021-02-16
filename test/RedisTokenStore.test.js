@@ -1,5 +1,5 @@
 const assert = require('assert');
-const database = require('../db').init();
+const database = require('../db')();
 const RedisTokenStore = require('../src/RedisTokenStore');
 
 describe('Redis Token Store', () => {

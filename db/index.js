@@ -1,7 +1,7 @@
 const redis = require('redis');
 const { promisify } = require('util');
 
-const init = () => {
+module.exports = function init() {
   const client = redis.createClient();
 
   addEventListeners();
@@ -42,8 +42,4 @@ const init = () => {
       { msetExpire }
     );
   }
-};
-
-module.exports = {
-  init,
 };
