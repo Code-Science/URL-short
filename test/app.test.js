@@ -3,124 +3,65 @@ const request = require('supertest');
 const assert = require('assert');
 
 describe('POST "/shorten"', () => {
-  it('should return a shortened version of a given valid url', (done) => {
-    request(app)
-      .post('/shorten')
-      .send({
-        url: 'http://example.com/very/long/url',
-      })
-      .expect('Content-Type', /json/)
-      .expect('Content-Length', '47')
-      .expect(200)
-      .then((response) => {
-        assert.strictEqual(response.body.result.length, 34);
-        done();
-      })
-      .catch((err) => done(err));
+  it('should return a shortened version of a given valid url', async () => {
+    const response = await shortenUrl('http://example.com/very/long/url');
+    assert.strictEqual(response.body.result.length, 34);
+    assert.match(response.body.result, /^http:\/\/localhost:3000\/r\/\w{10}$/);
   });
 
-  it('should return different result per url', (done) => {
-    request(app)
-      .post('/shorten')
-      .send({
-        url: 'http://example1.com/very/long/url',
-      })
-      .expect(200)
-      .then((response) => {
-        request(app)
-          .post('/shorten')
-          .send({
-            url: 'http://example2.com/very/long/url',
-          })
-          .expect(200)
-          .then((secondResponse) => {
-            assert.notStrictEqual(response.body.result, secondResponse.body.result);
-            done();
-          })
-          .catch((err) => done(err));
-      })
-      .catch((err) => done(err));
+  it('should return different result per url', async () => {
+    const response1 = await shortenUrl('http://example1.com/very/long/url');
+    const response2 = await shortenUrl('http://example2.com/very/long/url');
+    assert.notStrictEqual(response1.body.result, response2.body.result);
   });
 
-  it('should return same result for same url', (done) => {
-    request(app)
-      .post('/shorten')
-      .send({
-        url: 'http://example.com/very/long/url',
-      })
-      .expect(200)
-      .then((response) => {
-        request(app)
-          .post('/shorten')
-          .send({
-            url: 'http://example.com/very/long/url',
-          })
-          .expect(200)
-          .then((secondResponse) => {
-            assert.strictEqual(response.body.result, secondResponse.body.result);
-            done();
-          })
-          .catch((err) => done(err));
-      })
-      .catch((err) => done(err));
+  it('should return same result for same url', async () => {
+    const response1 = await shortenUrl('http://example.com/very/long/url');
+    const response2 = await shortenUrl('http://example.com/very/long/url');
+    assert.strictEqual(response1.body.result, response2.body.result);
   });
 
-  it('should reject missing url', (done) => {
-    request(app)
-      .post('/shorten')
-      .send({})
-      .expect('Content-Type', /json/)
-      .expect(400)
-      .then((response) => {
-        assert.strictEqual(response.body.error, 'A valid url is required');
-        done();
-      })
-      .catch((err) => done(err));
+  it('should reject missing url', async () => {
+    const response = await shortenUrl('', 400);
+    assert.strictEqual(response.body.error, 'A valid url is required');
   });
 
-  it('should reject invalid url', (done) => {
-    request(app)
-      .post('/shorten')
-      .send({ url: 'http://' })
-      .expect('Content-Type', /json/)
-      .expect(400)
-      .then((response) => {
-        assert.strictEqual(response.body.error, 'Invalid URL: http://');
-        done();
-      })
-      .catch((err) => done(err));
+  it('should reject invalid url', async () => {
+    const response = await shortenUrl('http://', 400);
+    assert.strictEqual(response.body.error, 'Invalid URL: http://');
   });
 });
 
 describe('GET "/r/:token"', () => {
   let savedToken;
-  before((done) => {
-    request(app)
-      .post('/shorten')
-      .send({
-        url: 'http://exampleGet.com/very/long/url',
-      })
-      .expect(200)
-      .then((response) => {
-        savedToken = response.body.result.slice(-10);
-        done();
-      })
-      .catch((err) => done(err));
+
+  before(async () => {
+    const response = await shortenUrl('http://exampleGet.com/very/long/url');
+    savedToken = response.body.result.slice(-10);
   });
 
-  it('should redirect request to original url, for a known url', (done) => {
-    request(app).get(`/r/${savedToken}`).expect(301).expect('location', 'http://exampleGet.com/very/long/url').end(done);
+  it('should redirect request to original url, for a known url', async () => {
+    const response = await redirectToOriginalUrl(savedToken);
+    assert.strictEqual(response.header.location, 'http://exampleGet.com/very/long/url');
   });
 
-  it('should return 404 for an unknown url', (done) => {
-    request(app)
-      .get(`/r/unknown`)
-      .expect(404)
-      .expect('Content-Type', /json/)
-      .then((response) => {
-        assert.strictEqual(response.body.message, 'Unknown short url');
-        done();
-      })
-      .catch((err) => done(err));
+  it('should return 404 for an unknown url', async () => {
+    const response = await redirectToOriginalUrl('unknown', 404);
+    assert.strictEqual(response.body.message, 'Unknown short url');
+    assert.strictEqual(response.type, 'application/json');
   });
 });
+
+function shortenUrl(url, status = 200) {
+  return request(app)
+    .post('/shorten')
+    .send({
+      url,
+    })
+    .expect('Content-Type', /json/)
+    .expect(status);
+}
+
+function redirectToOriginalUrl(token, status = 301) {
+  return request(app).get(`/r/${token}`).expect(status);
+}

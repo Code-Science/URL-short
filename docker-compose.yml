@@ -1,0 +1,17 @@
+services:
+  url-shortener-api:
+    container_name: backend
+    build: ./
+    ports:
+      - '3000:3000'
+    environment:
+      REDIS_HOST: redis_1
+      URL_SHORTENER_ENV: live
+    volumes:
+      - ./:/usr/src/app
+    links:
+      - redis
+  redis:
+    image: redis:6-alpine
+    ports:
+      - '6379:6379'

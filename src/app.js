@@ -2,6 +2,7 @@ const express = require('express');
 const TokenFactory = require('./TokenFactory');
 const InMemoryTokenStore = require('./InMemoryTokenStore');
 const validateUrl = require('./middlewares/validateUrl');
+const config = require(`${process.cwd()}/${process.env.URL_SHORTENER_ENV || 'local'}`);
 
 const app = express();
 const inMemoryTokenStore = new InMemoryTokenStore();
@@ -18,7 +19,7 @@ app.get('/r/:token', async (req, res) => {
 
 app.post('/shorten', validateUrl, async (req, res) => {
   const token = await tokenFactory.create(req.body.url);
-  res.status(200).json({ result: 'http://localhost:3000/r/' + token });
+  res.status(200).json({ result: `${config.baseUrl}/r/${token}` });
 });
 
 app.use((err, req, res, next) => {
